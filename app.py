@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+import os
 
 st.set_page_config(page_title="Pharmacist Full Scope Survey – Australia", layout="centered")
 
@@ -24,6 +26,7 @@ services = st.multiselect("Which full scope services do you currently deliver?",
     "Vaccination", "Chronic disease management", "Medication review",
     "Opioid dependence treatment"
 ])
+other_services = st.text_input("Other services (if any):")
 common_decisions = st.text_area("What are the most common clinical decisions you make daily?")
 barriers = st.multiselect("What are your biggest day-to-day challenges?", [
     "Time pressure", "Internet dropout", "Lack of backup", "Uncertainty in guidelines",
@@ -73,20 +76,18 @@ comments = st.text_area("Any other feedback, ideas, or concerns?")
 
 # Submit
 if st.button("Submit Survey"):
-    st.success("✅ Thank you! Your responses have been recorded.")
-    st.write("---")
-    st.subheader("📋 Your Summary")
-    st.json({
+    # Create a dict to store
+    response = {
         "Name": name,
         "Email": email,
         "State": state,
         "Experience": experience,
-        "Services": services,
+        "Services": services + ([other_services] if other_services else []),
         "Common Decisions": common_decisions,
         "Barriers": barriers,
         "Delayed Service": delayed_services,
         "Delay Reason": delayed_reason,
-        "Confidence (1-5)": confidence,
+        "Confidence": confidence,
         "Double Check Info?": double_check,
         "Current Support": current_support,
         "Support Barriers": support_barriers,
@@ -99,4 +100,17 @@ if st.button("Submit Survey"):
         "Pilot Interest": interested,
         "Preferred Modes": modes,
         "Final Comments": comments
-    })
+    }
+
+    # Save to CSV
+    df = pd.DataFrame([response])
+    file_path = "responses.csv"
+    if not os.path.exists(file_path):
+        df.to_csv(file_path, index=False)
+    else:
+        df.to_csv(file_path, mode='a', header=False, index=False)
+
+    st.success("✅ Thank you! Your responses have been saved locally.")
+    st.write("---")
+    st.subheader("📋 Your Summary")
+    st.json(response)
